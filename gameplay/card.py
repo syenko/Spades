@@ -1,7 +1,9 @@
-class Card(object):
-    def __init__(self, suite, number):
-        self.suite = suite
-        self.number = number
+from gameplay.enums import Suit
 
-    def __str__(self):
-        return self.suite + " " + str(self.number)
+class Card(object):
+    def __init__(self, suit: Suit, number: int):
+        self.suit: Suit = suit
+        self.number: int = number
+
+    def __repr__(self):
+        return "{number} of {suit}".format(number=str(self.number), suit=self.suit.name.title())

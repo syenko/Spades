@@ -1,16 +1,16 @@
 from gameplay.card import Card
 import random
 
-class Deck(object):
+from gameplay.enums import Suit
 
-    suites = ["Spades", "Hearts", "Diamonds", "Clubs"]
+class Deck(object):
 
     def __init__(self):
         self.cards = []
 
-        for i in range(0, 4):
+        for suit in Suit:
             for j in range(2, 15):
-                self.cards.append(Card(Deck.suites[i], j))
+                self.cards.append(Card(suit, j))
 
     def shuffle(self):
         random.shuffle(self.cards)
