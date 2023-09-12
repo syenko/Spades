@@ -3,6 +3,7 @@ from gameplay.enums import Suit
 from gameplay.observation import Observation
 from gameplay.player import Player
 
+
 class Game(object):
 
     def __init__(self):
@@ -19,13 +20,33 @@ class Game(object):
         self.spades_broken = False
 
         for i in range(1, 5):
-            self.hand = self.deck.cards[(i-1)*13: i*13]
+            self.hand = self.deck.cards[(i - 1) * 13: i * 13]
             self.players.append(Player(self.hand, i))
 
     def play_game(self):
         for i in range(13):
             print("=================== ROUND {} ===================".format(i))
             game.play_round()
+
+        print("\n***************** Final Results *****************")
+        for i, player in enumerate(self.players):
+            print("Player {}: {}/{}".format(i, player.tricks_taken, player.bid))
+
+        print("Team 1 scored {} ".format(self.get_score(self.players[::2])))
+        print("Team 2 scored {} ".format(self.get_score(self.players[1::2])))
+
+    def get_score(self, players):
+        total_bid = 0
+        total_made = 0
+
+        for player in players:
+            total_bid += player.bid
+            total_made += player.tricks_taken
+
+        if total_made >= total_bid:
+            return total_bid * 10 + (total_made - total_bid)
+        else:
+            return -total_bid * 10
 
     def play_round(self):
         tricks_played = []
@@ -67,9 +88,3 @@ class Game(object):
 
 game = Game()
 game.play_game()
-# for i in range(0, 13):
-#      print(game.players[0].hand[i])
-# print("-------")
-# game.players[0].hand_sort()
-# for i in range(0, 13):
-#      print(game.players[0].hand[i])
