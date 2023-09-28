@@ -1,13 +1,19 @@
+from typing import List
+
+from gameplay.actions import Move
+from gameplay.card import Card
 from gameplay.deck import Deck
-from gameplay.enums import Suit
+from gameplay.enums import Suit, Phase
+from gameplay.moves import PlayCardMove
 from gameplay.observation import Observation
 from gameplay.player import Player
+from gameplay.round import Round
 
 
 class Game(object):
 
     def __init__(self):
-        self.deck = Deck()
+        self.deck: Deck = Deck()
         self.deck.shuffle()
 
         self.players = []
@@ -22,6 +28,8 @@ class Game(object):
         for i in range(1, 5):
             self.hand = self.deck.cards[(i - 1) * 13: i * 13]
             self.players.append(Player(self.hand, i))
+
+        self.round: Round = Round(players=self.players, round_num=0)
 
     def play_game(self):
         for i in range(13):
@@ -54,7 +62,7 @@ class Game(object):
 
         for i in range(len(self.players)):
             self.current_player_index = (self.starting_player_index + i) % 4
-            card_played = self.players[self.current_player_index].play(
+            card_played = self.players[self.current_player_index].get_card_to_play(
                 Observation(i, tricks_played, self.cards_played, suit, self.bids, self.spades_broken)
             )
 
@@ -84,6 +92,37 @@ class Game(object):
         self.starting_player_index = winning_trick["player"].position
 
         print("Winning Trick: {}".format(tricks_played[0]["card"]))
+
+    def get_legal_actions(self) -> List[Move]:
+        legal_actions: List[Move] = []
+        if not self.is_over():
+            # TODO: Add Bidding Actions
+            if self.round.phase == Phase.PLAYING:
+                current_player = self.round.get_current_player()
+                leading_suit = self.round.leading_suit
+                hand = current_player.hand.hand
+
+                legal_cards: List[Card] = hand
+
+                # there is an existing starting suit
+                if leading_suit:
+                    legal_cards = [card for card in hand if card.suit == leading_suit]
+                # starting, but spades hasn't been broken yet
+                elif not self.round.spades_broken:
+                    legal_cards = [card for card in hand if card.suit != Suit.SPADES]
+
+                if len(legal_cards) == 0:
+                    legal_cards = hand
+
+                legal_actions = [PlayCardMove(card) for card in legal_cards]
+        return legal_actions
+
+
+
+    def is_over(self) -> bool:
+        # TODO: Implement
+        pass
+
 
 
 game = Game()

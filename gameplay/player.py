@@ -4,6 +4,7 @@ from gameplay.observation import Observation
 from gameplay.enums import Suit
 import random
 
+
 class Player(object):
 
     def __init__(self, hand, position):
@@ -11,14 +12,6 @@ class Player(object):
         self.position = position
         self.tricks_taken = 0
         self.bid = 0
-
-    def helper(card: Card):
-        suit = card.suit.value
-        rank = card.number
-        return (suit, rank)
-
-    def hand_sort(self):
-        self.hand.sort(key=Player.helper)
 
     def is_valid_move(self, observation: Observation, card: Card) -> bool:
         if observation.suit is None:
@@ -29,8 +22,8 @@ class Player(object):
             else:
                 return True
 
-
-    def play(self, observation: Observation) -> Card:
+    def get_card_to_play(self, observation: Observation) -> Card:
+        # TODO: Refactor to work with game.get_legal_actions
         if observation.suit is None:
             if not observation.spades_broken:
                 card = self.hand.get_random(suits=[Suit.HEARTS, Suit.DIAMONDS, Suit.CLUBS])
@@ -45,8 +38,12 @@ class Player(object):
 
         print(card)
 
-        assert(self.is_valid_move(observation, card))
-
-        self.hand.play_card(card)
+        assert (self.is_valid_move(observation, card))
 
         return card
+
+    def play_card(self, card: Card):
+        self.hand.play_card(card)
+
+    def __str__(self):
+        return ['N', 'E', 'S', 'W'][self.position]

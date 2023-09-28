@@ -4,3 +4,7 @@ class Suit(Enum):
     CLUBS = 1
     HEARTS = 2
     SPADES = 3
+
+class Phase(Enum):
+    BIDDING = 0
+    PLAYING = 1

@@ -8,17 +8,28 @@ class Hand(object):
     def __init__(self, hand):
         self.cards = {
             suit: [] for suit in Suit
-        }
+        }  # cards sorted by suit
 
         self.played_cards = {
             suit: [] for suit in Suit
-        }
+        }  # played cards sorted by suit
 
         for card in hand:
             self.cards[card.suit].append(card)
 
         for suit, val in self.cards.items():
             val.sort(key=lambda x: x.number, reverse=True)
+
+        self.hand = hand # pure list of cards
+        self.hand_sort()
+
+    def helper(card: Card):
+        suit = card.suit.value
+        rank = card.number
+        return (suit, rank)
+
+    def hand_sort(self):
+        self.hand.sort(key=lambda x: (x.suit.value, x.number))
 
     def get_count(self, suit):
         return len(self.cards[suit])
