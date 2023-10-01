@@ -1,22 +1,23 @@
 from typing import List
 
-from gameplay.actions import Move
+from gameplay.actions import Action, PlayCardAction
 from gameplay.card import Card
 from gameplay.deck import Deck
-from gameplay.enums import Suit, Phase
-from gameplay.moves import PlayCardMove
-from gameplay.observation import Observation
+from gameplay.constants import Suit, Phase
+from gameplay.moves import Move, PlayCardMove
 from gameplay.player import Player
 from gameplay.round import Round
 
 
 class Game(object):
 
-    def __init__(self):
+    def __init__(self, max_rounds: int, winning_score: int):
         self.deck: Deck = Deck()
-        self.deck.shuffle()
 
-        self.players = []
+        self.max_rounds = max_rounds
+        self.winning_score = winning_score
+
+        self.players: List[Player] = []
         self.starting_player_index = 0
         self.current_player_index = 0
 
@@ -25,11 +26,20 @@ class Game(object):
 
         self.spades_broken = False
 
-        for i in range(1, 5):
-            self.hand = self.deck.cards[(i - 1) * 13: i * 13]
-            self.players.append(Player(self.hand, i))
-
+        self.previous_rounds = []
         self.round: Round = Round(players=self.players, round_num=0)
+
+        self.setup_next_round()
+
+    def setup_next_round(self):
+        self.deck.shuffle()
+        self.players.clear()
+
+        for i in range(1, 5):
+            hand = self.deck.cards[(i - 1) * 13: i * 13]
+            self.players.append(Player(hand, i))
+
+        self.round: Round = Round(players=self.players, round_num=len(self.previous_rounds))
 
     def play_game(self):
         for i in range(13):
@@ -43,58 +53,33 @@ class Game(object):
         print("Team 1 scored {} ".format(self.get_score(self.players[::2])))
         print("Team 2 scored {} ".format(self.get_score(self.players[1::2])))
 
-    def get_score(self, players):
-        total_bid = 0
-        total_made = 0
+    def get_total_score(self) -> List[int]:
+        round_scores = self.round.get_scores()
+        total_scores = round_scores[:]
+        for round in self.previous_rounds:
+            round_scores = round.get_scores()
+            total_scores[0] += round_scores[0]
+            total_scores[1] += round_scores[1]
 
-        for player in players:
-            total_bid += player.bid
-            total_made += player.tricks_taken
+        return total_scores
 
-        if total_made >= total_bid:
-            return total_bid * 10 + (total_made - total_bid)
-        else:
-            return -total_bid * 10
+    # takes an action, returns next player
+    def step(self, action: Action) -> int:
+        # TODO: Add bidding actions
+        if isinstance(action, PlayCardAction):
+            self.round.play_card(action)
 
-    def play_round(self):
-        tricks_played = []
-        suit = None
+        if self.round.is_over():
+            self.previous_rounds.append(round)
 
-        for i in range(len(self.players)):
-            self.current_player_index = (self.starting_player_index + i) % 4
-            card_played = self.players[self.current_player_index].get_card_to_play(
-                Observation(i, tricks_played, self.cards_played, suit, self.bids, self.spades_broken)
-            )
 
-            if suit is None:
-                suit = card_played.suit
+        # TODO: Also return state?
 
-            if card_played.suit == Suit.SPADES:
-                self.spades_broken = True
+        return self.round.current_player_id
 
-            self.cards_played.append(card_played)
-            tricks_played.append({
-                "card": card_played,
-                "player": self.players[self.current_player_index]
-            })
-
-        # sort tricks to get the winner
-        tricks_played.sort(key=lambda x: (
-            2 if x["card"].suit == Suit.SPADES else
-            1 if x["card"].suit == suit else
-            0,
-            x["card"].number
-        ), reverse=True)
-
-        winning_trick = tricks_played[0]
-
-        winning_trick["player"].tricks_taken += 1
-        self.starting_player_index = winning_trick["player"].position
-
-        print("Winning Trick: {}".format(tricks_played[0]["card"]))
-
-    def get_legal_actions(self) -> List[Move]:
-        legal_actions: List[Move] = []
+    # returns a list of actions the player can take given the particular state
+    def get_legal_actions(self) -> List[Action]:
+        legal_actions: List[Action] = []
         if not self.is_over():
             # TODO: Add Bidding Actions
             if self.round.phase == Phase.PLAYING:
@@ -114,14 +99,12 @@ class Game(object):
                 if len(legal_cards) == 0:
                     legal_cards = hand
 
-                legal_actions = [PlayCardMove(card) for card in legal_cards]
+                legal_actions = [PlayCardAction(card) for card in legal_cards]
         return legal_actions
 
-
-
     def is_over(self) -> bool:
-        # TODO: Implement
-        pass
+        return len(self.previous_rounds) > self.max_rounds or \
+            max(self.round.get_scores()) > self.winning_score
 
 
 

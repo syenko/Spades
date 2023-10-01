@@ -1,8 +1,7 @@
 from typing import List
 
 from gameplay.actions import PlayCardAction
-from gameplay.card import Card
-from gameplay.enums import Suit, Phase
+from gameplay.constants import Suit, Phase, MAX_NUM_CARDS
 from gameplay.player import Player
 from gameplay.moves import PlayCardMove, Move
 
@@ -22,6 +21,7 @@ class Round(object):
 
         self.num_cards_played: int = 0
         self.tricks_won: List[int] = [0, 0]  # tricks won on each side
+        self.tricks_bid: List[int] = [0, 0]  # tricks bid on each side
         self.move_log: List[Move] = []
 
     def play_card(self, action: PlayCardAction):
@@ -67,5 +67,18 @@ class Round(object):
 
             return self.move_log[-num_trick_moves:]
 
-    def get_current_player(self):
+    def get_current_player(self) -> Player:
         return self.players[self.current_player_id]
+
+    def get_scores(self) -> List[int]:
+        scores = []
+        for made, bid in zip(self.tricks_won, self.tricks_bid):
+            if made >= bid:
+                scores.append(bid * 10 + (made - bid))
+            else:
+                scores.append(-bid * 10)
+
+        return scores
+
+    def is_over(self) -> bool:
+        return self.num_cards_played >= MAX_NUM_CARDS
