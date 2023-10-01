@@ -1,8 +1,7 @@
 from gameplay.card import Card
 from gameplay.hand import Hand
 from gameplay.observation import Observation
-from gameplay.enums import Suit
-import random
+from gameplay.constants import Suit
 
 
 class Player(object):

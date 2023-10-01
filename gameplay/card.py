@@ -1,4 +1,4 @@
-from gameplay.enums import Suit
+from gameplay.constants import Suit
 
 class Card(object):
     def __init__(self, suit: Suit, number: int):
