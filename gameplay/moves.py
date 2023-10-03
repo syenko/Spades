@@ -1,4 +1,4 @@
-from gameplay.actions import PlayCardAction
+from gameplay.actions import PlayCardAction, BidAction
 from gameplay.player import Player
 
 
@@ -12,4 +12,11 @@ class PlayCardMove(Move):
     def __init__(self, action: PlayCardAction, player: Player):
         self.action = action
         self.card = action.card
+        self.player = player
+
+
+class BidMove(Move):
+    def __init__(self, action: BidAction, player: Player):
+        self.action = action
+        self.bid = action.bid
         self.player = player

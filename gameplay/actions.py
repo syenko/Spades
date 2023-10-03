@@ -10,3 +10,8 @@ class Action:  # Interface
 class PlayCardAction(Action):
     def __init__(self, card: Card):
         self.card = card
+
+
+class BidAction(Action):
+    def __init__(self, bid: int):
+        self.bid = bid

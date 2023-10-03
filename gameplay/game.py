@@ -1,6 +1,4 @@
-from typing import List
-
-from gameplay.actions import Action, PlayCardAction
+from gameplay.actions import Action, PlayCardAction, BidAction
 from gameplay.card import Card
 from gameplay.deck import Deck
 from gameplay.constants import Suit, Phase
@@ -17,7 +15,7 @@ class Game(object):
         self.max_rounds = max_rounds
         self.winning_score = winning_score
 
-        self.players: List[Player] = []
+        self.players: list[Player] = []
         self.starting_player_index = 0
         self.current_player_index = 0
 
@@ -53,7 +51,7 @@ class Game(object):
         print("Team 1 scored {} ".format(self.get_score(self.players[::2])))
         print("Team 2 scored {} ".format(self.get_score(self.players[1::2])))
 
-    def get_total_score(self) -> List[int]:
+    def get_total_score(self) -> list[int]:
         round_scores = self.round.get_scores()
         total_scores = round_scores[:]
         for round in self.previous_rounds:
@@ -78,16 +76,27 @@ class Game(object):
         return self.round.current_player_id
 
     # returns a list of actions the player can take given the particular state
-    def get_legal_actions(self) -> List[Action]:
-        legal_actions: List[Action] = []
+    def get_legal_actions(self) -> list[Action]:
+        legal_actions: list[Action] = []
         if not self.is_over():
-            # TODO: Add Bidding Actions
-            if self.round.phase == Phase.PLAYING:
-                current_player = self.round.get_current_player()
+            current_player = self.round.get_current_player()
+            if self.round.phase == Phase.BIDDING:
+                # bidding first
+                if len(self.round.bid_move_log) < len(self.round.players) // 2:
+                    legal_actions = [BidAction(bid) for bid in range(0, 13)]
+                # partner bid first
+                else:
+                    partner_bid = self.round.tricks_bid[current_player.position % 2]
+                    max_bid = 13 - partner_bid
+                    min_bid = 4 - partner_bid
+                    legal_actions = [BidAction(bid) for bid in range(min_bid, max_bid)]
+                    legal_actions.append(BidAction(0)) # always allow going nil
+
+            elif self.round.phase == Phase.PLAYING:
                 leading_suit = self.round.leading_suit
                 hand = current_player.hand.hand
 
-                legal_cards: List[Card] = hand
+                legal_cards: list[Card] = hand
 
                 # there is an existing starting suit
                 if leading_suit:
