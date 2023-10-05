@@ -1,6 +1,7 @@
 import gymnasium as gym
 import numpy as np
 
+from gameplay.actions import Action
 from gameplay.constants import Phase, MAX_NUM_CARDS
 from gameplay.game import Game
 
@@ -38,17 +39,17 @@ class SpadesEnv(gym.Env):
         # which cards are in my hand
         cards_in_hand_rep = np.zeros(MAX_NUM_CARDS)
         for card in cur_player.hand.cards:
-            cards_in_hand_rep[card.get_key()] = 1
+            cards_in_hand_rep[card.get_id()] = 1
 
         # which cards have been played and by whom
         cards_played_rep = np.zeros(MAX_NUM_CARDS * 4)
         for move in cur_round.card_move_log:
-            cards_played_rep[move.card.get_key() + move.player.position * MAX_NUM_CARDS] = 1
+            cards_played_rep[move.card.get_id() + move.player.position * MAX_NUM_CARDS] = 1
 
         # which cards have been played in this trick and by whom
         trick_cards_played_rep = np.zeros(MAX_NUM_CARDS * 4)
         for move in cur_round.get_trick_moves():
-            trick_cards_played_rep[move.card.get_key() + move.player.position * MAX_NUM_CARDS] = 1
+            trick_cards_played_rep[move.card.get_id() + move.player.position * MAX_NUM_CARDS] = 1
 
         # tricks taken by each player
         tricks_taken_rep = np.zeros(4)
@@ -70,7 +71,12 @@ class SpadesEnv(gym.Env):
 
         obs = np.concatenate(rep)
 
+        legal_actions = np.zeros(Action.get_num_actions())
+        for action in self.game.get_legal_actions():
+            legal_actions[action.get_id()] = 1
+
         extracted_state['obs'] = obs
+        extracted_state['legal_actions'] = legal_actions
 
         return extracted_state
 

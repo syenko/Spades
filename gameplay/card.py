@@ -8,6 +8,6 @@ class Card(object):
     def __repr__(self):
         return "{number} of {suit}".format(number=str(self.number), suit=self.suit.name.title())
 
-    def get_key(self) -> int:
+    def get_id(self) -> int:
         return self.suit.value * 13 + (self.number-2)
 
