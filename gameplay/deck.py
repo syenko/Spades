@@ -1,7 +1,7 @@
 from gameplay.card import Card
 import random
 
-from gameplay.enums import Suit
+from gameplay.constants import Suit
 
 class Deck(object):
 

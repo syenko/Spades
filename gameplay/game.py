@@ -19,11 +19,6 @@ class Game(object):
         self.starting_player_index = 0
         self.current_player_index = 0
 
-        self.cards_played = []
-        self.bids = []
-
-        self.spades_broken = False
-
         self.previous_rounds = []
         self.round: Round = Round(players=self.players, round_num=0)
 
@@ -86,7 +81,7 @@ class Game(object):
                     legal_actions = [BidAction(bid) for bid in range(0, 13)]
                 # partner bid first
                 else:
-                    partner_bid = self.round.tricks_bid[current_player.position % 2]
+                    partner_bid = self.round.bids[current_player.position % 2]
                     max_bid = 13 - partner_bid
                     min_bid = 4 - partner_bid
                     legal_actions = [BidAction(bid) for bid in range(min_bid, max_bid)]

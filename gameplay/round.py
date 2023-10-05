@@ -19,7 +19,7 @@ class Round(object):
 
         self.num_cards_played: int = 0
         self.tricks_won: list[int] = [0, 0]  # tricks won on each side
-        self.tricks_bid: list[int] = [0, 0]  # tricks bid on each side
+        self.bids: list[int] = [0, 0]  # tricks bid on each side
         self.bid_move_log: list[BidMove] = []
         self.card_move_log: list[PlayCardMove] = []
 
@@ -62,7 +62,7 @@ class Round(object):
         current_player = self.get_current_player()
         self.bid_move_log.append(BidMove(action, current_player))
         current_player.bid = action.bid
-        self.tricks_bid[current_player.position % 2] += 1
+        self.bids[current_player.position % 2] += 1
 
         if len(self.bid_move_log) >= len(self.players):
             self.phase = Phase.BIDDING
@@ -80,7 +80,7 @@ class Round(object):
 
     def get_scores(self) -> list[int]:
         scores = []
-        for made, bid in zip(self.tricks_won, self.tricks_bid):
+        for made, bid in zip(self.tricks_won, self.bids):
             if made >= bid:
                 scores.append(bid * 10 + (made - bid))
             else:
