@@ -58,15 +58,16 @@ class Game(object):
 
     # takes an action, returns next player
     def step(self, action: Action) -> int:
-        # TODO: Add bidding actions
+        if isinstance(action, BidAction):
+            self.round.bid(action)
+
         if isinstance(action, PlayCardAction):
             self.round.play_card(action)
 
         if self.round.is_over():
             self.previous_rounds.append(round)
 
-
-        # TODO: Also return state?
+        # TODO: consider what to return (state too??)
 
         return self.round.current_player_id
 
