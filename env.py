@@ -24,7 +24,13 @@ class SpadesEnv(gym.Env):
 
     # returns (observation, info: list of legal actions)
     def reset(self, seed=None, options=None) -> tuple[list[int], list[int]]:
-        pass
+        self.game.reset()
+
+        state = self.extract_state()
+        observation: list[int] = state['obs']
+        legal_actions: list[int] = state['legal_actions']
+
+        return observation, legal_actions
 
     def close(self):
         pass

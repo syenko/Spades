@@ -34,6 +34,14 @@ class Game(object):
 
         self.round: Round = Round(players=self.players, round_num=len(self.previous_rounds))
 
+    def reset(self):
+        self.starting_player_index = 0
+        self.current_player_index = 0
+        self.previous_rounds = []
+        self.round: Round = Round(players=self.players, round_num=0)
+
+        self.setup_next_round()
+
     def play_game(self):
         for i in range(13):
             print("=================== ROUND {} ===================".format(i))
