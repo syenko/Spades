@@ -1,3 +1,5 @@
+from typing import Self
+
 from gameplay.constants import Suit
 
 class Card(object):
@@ -11,3 +13,8 @@ class Card(object):
     def get_id(self) -> int:
         return self.suit.value * 13 + (self.number-2)
 
+    @classmethod
+    def from_id(cls, val: int) -> Self:
+        number: int = val % 13 + 2
+        suit: Suit = Suit(val // 13)
+        return cls(suit, number)

@@ -12,12 +12,18 @@ class SpadesEnv(gym.Env):
         self.game = Game(max_rounds, winning_score)
         pass
 
-    # returns (observation, reward, terminated, truncated, info)
-    def step(self, action: int) -> tuple[list[int], int, bool, bool, None]:
-        pass
+    # returns (observation, reward, terminated, truncated, info: list of legalactions)
+    def step(self, action: int) -> tuple[list[int], int, bool, bool, list[int]]:
+        self.game.step(Action.get_action_from_id(action))
 
-    # returns (observation, info)
-    def reset(self, seed=None, options=None) -> tuple[list[int], None]:
+        state = self.extract_state()
+        observation: list[int] = state['obs']
+        legal_actions: list[int] = state['legal_actions']
+
+        return observation, 0, self.game.is_over(), False, legal_actions
+
+    # returns (observation, info: list of legal actions)
+    def reset(self, seed=None, options=None) -> tuple[list[int], list[int]]:
         pass
 
     def close(self):
