@@ -3,8 +3,8 @@ import random
 
 from gameplay.constants import Suit
 
-class Deck(object):
 
+class Deck(object):
     def __init__(self):
         self.cards = []
 
