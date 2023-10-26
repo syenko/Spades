@@ -109,3 +109,7 @@ class SpadesEnv(gym.Env):
         size += 1  # round number (not 1 hot)
         # TODO: implement
         return size
+
+    def get_reward(self) -> int:
+        # TODO: Implement
+        return 0
