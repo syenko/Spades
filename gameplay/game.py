@@ -9,7 +9,16 @@ from gameplay.round import Round
 
 class Game(object):
 
-    def __init__(self, max_rounds: int, winning_score: int):
+    def __init__(
+            self,
+            max_rounds: int,
+            winning_score: int,
+            starting_card_orders: list[list[Card]] = None,
+            starting_scores: list[int] = None
+    ):
+        self.initial_scores = [0, 0] if starting_scores is None else starting_scores
+        self.card_orders = [] if starting_card_orders is None else starting_card_orders
+
         self.deck: Deck = Deck()
 
         self.max_rounds = max_rounds
@@ -20,19 +29,27 @@ class Game(object):
         self.current_player_index = 0
 
         self.previous_rounds = []
+        self.round_num = 0
         self.round: Round = Round(players=self.players, round_num=0)
 
         self.setup_next_round()
 
     def setup_next_round(self):
-        self.deck.shuffle()
+        # fixed order given
+        if len(self.card_orders) < self.round_num:
+            self.deck.set_fixed_order(self.card_orders[self.round_num])
+        # otherwise, just shuffle
+        else:
+            self.deck.shuffle()
+
         self.players.clear()
 
         for i in range(1, 5):
             hand = self.deck.cards[(i - 1) * 13: i * 13]
             self.players.append(Player(hand, i))
 
-        self.round: Round = Round(players=self.players, round_num=len(self.previous_rounds))
+        self.round: Round = Round(players=self.players, round_num=self.round_num)
+        self.round_num += 1
 
     def reset(self):
         self.starting_player_index = 0
@@ -57,6 +74,10 @@ class Game(object):
     def get_total_score(self) -> list[int]:
         round_scores = self.round.get_scores()
         total_scores = round_scores[:]
+
+        total_scores[0] += self.initial_scores[0]
+        total_scores[1] += self.initial_scores[1]
+
         for round in self.previous_rounds:
             round_scores = round.get_scores()
             total_scores[0] += round_scores[0]
