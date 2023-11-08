@@ -2,10 +2,10 @@ from enum import Enum
 
 
 class Suit(Enum):
-    DIAMONDS = 0
-    CLUBS = 1
-    HEARTS = 2
-    SPADES = 3
+    DIAMONDS = 3
+    CLUBS = 2
+    HEARTS = 1
+    SPADES = 0
 
 
 class Phase(Enum):
