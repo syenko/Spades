@@ -1,5 +1,8 @@
+from typing import Any
+
 from gameplay.card import Card
 from gameplay.constants import Suit
+
 
 def str_value_to_num_value(value: str) -> int:
     cards_in_order = "23456789tjqka"
@@ -12,6 +15,7 @@ def str_to_cards_list(card_str: str) -> list[Card]:
     ]
     return cards
 
+
 def processing(filename):
     file = open(filename)
 
@@ -21,14 +25,20 @@ def processing(filename):
     mode = int(info[5])
     variation = int(info[17])
 
-    numrounds = int((len(lines) - 2)/17)
+    if mode != 0 or variation != 0:
+        return {
+            'mode': mode,
+            'variation': variation
+        }
+
+    numrounds = int((len(lines) - 2) / 17)
 
     rounds = []
 
     for i in range(numrounds):
         tricks = []
         for j in range(13):
-            line = lines[4+j+i*17]
+            line = lines[4 + j + i * 17]
             start = int(line[0])
             cardsplayed = str_to_cards_list(line[2:])
             dict = {
@@ -40,9 +50,9 @@ def processing(filename):
         hand = str_to_cards_list(lines[2 + i * 17][6:])
         bidstring = lines[3 + i * 17][5:]
         bid = [int(x) for x in bidstring.split(",")]
-        trickstakenstring = lines[(i+1) * 17][7:]
+        trickstakenstring = lines[(i + 1) * 17][7:]
         trickstaken = [int(x) for x in trickstakenstring.split(",")]
-        scorestring = lines[(i+1) * 17 + 1][6:]
+        scorestring = lines[(i + 1) * 17 + 1][6:]
         score = [int(x) for x in scorestring.split(",")]
 
         dict = {
@@ -63,3 +73,8 @@ def processing(filename):
     # print(dict)
     return dict
 
+
+def two_lists_are_equal(l1: list[Any], l2: list[Any]) -> bool:
+    if len(l1) != len(l2):
+        return False
+    return all(v1 == v2 for v1, v2 in zip(l1, l2))
