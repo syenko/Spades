@@ -1,8 +1,6 @@
 from gameplay.card import Card
 from gameplay.constants import Suit
 
-
-
 def str_value_to_num_value(value: str) -> int:
     cards_in_order = "23456789tjqka"
     return cards_in_order.index(value.lower()) + 2
@@ -32,7 +30,7 @@ def processing(filename):
         tricks = []
         for j in range(13):
             line = lines[4+j+i*17]
-            start = line[0]
+            start = int(line[0])
             cardsplayed = str_to_cards_list(line[2:])
             dict = {
                 "start": start,
@@ -41,9 +39,12 @@ def processing(filename):
             tricks.append(dict)
 
         hand = str_to_cards_list(lines[2 + i * 17][6:])
-        bid = lines[3 + i * 17]
-        trickstaken = lines[(i+1) * 17][7:]
-        score = lines[(i+1) * 17 + 1][6:]
+        bidstring = lines[3 + i * 17][5:]
+        bid = [int(x) for x in bidstring.split(",")]
+        trickstakenstring = lines[(i+1) * 17][7:]
+        trickstaken = [int(x) for x in trickstakenstring.split(",")]
+        scorestring = lines[(i+1) * 17 + 1][6:]
+        score = [int(x) for x in scorestring.split(",")]
 
         dict = {
             "cards": hand,
