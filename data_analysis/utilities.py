@@ -64,4 +64,3 @@ def processing(filename):
     print(dict)
     return dict
 
-processing("660480.txt")
