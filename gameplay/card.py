@@ -10,6 +10,10 @@ class Card(object):
     def __repr__(self):
         return "{number} of {suit}".format(number=str(self.number), suit=self.suit.name.title())
 
+    def __eq__(self, other: Self):
+        return self.number == other.number \
+            and self.suit == other.suit
+
     def get_id(self) -> int:
         return self.suit.value * 13 + (self.number-2)
 

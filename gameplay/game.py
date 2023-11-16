@@ -14,10 +14,12 @@ class Game(object):
             max_rounds: int,
             winning_score: int,
             starting_card_orders: list[list[Card]] = None,
+            starting_players: list[int] = None,
             starting_scores: list[int] = None
     ):
-        self.initial_scores = [0, 0] if starting_scores is None else starting_scores
-        self.card_orders = [] if starting_card_orders is None else starting_card_orders
+        self.initial_scores = [0, 0] if starting_scores is None else starting_scores[:]
+        self.card_orders = [] if starting_card_orders is None else starting_card_orders[:]
+        self.starting_players = [] if starting_players is None else starting_players[:]
 
         self.deck: Deck = Deck()
 
@@ -36,7 +38,7 @@ class Game(object):
 
     def setup_next_round(self):
         # fixed order given
-        if len(self.card_orders) < self.round_num:
+        if len(self.card_orders) > self.round_num:
             self.deck.set_fixed_order(self.card_orders[self.round_num])
         # otherwise, just shuffle
         else:
@@ -46,9 +48,15 @@ class Game(object):
 
         for i in range(1, 5):
             hand = self.deck.cards[(i - 1) * 13: i * 13]
-            self.players.append(Player(hand, i))
+            self.players.append(Player(hand, i - 1))
 
-        self.round: Round = Round(players=self.players, round_num=self.round_num)
+        starting_player = 0
+        # set fixed starting player if there is one
+        if len(self.starting_players) > self.round_num:
+            starting_player = self.starting_players[self.round_num]
+
+        self.round = Round(players=self.players, round_num=self.round_num, game_starting_player=starting_player)
+
         self.round_num += 1
 
     def reset(self):
@@ -59,18 +67,6 @@ class Game(object):
 
         self.setup_next_round()
 
-    def play_game(self):
-        for i in range(13):
-            print("=================== ROUND {} ===================".format(i))
-            game.play_round()
-
-        print("\n***************** Final Results *****************")
-        for i, player in enumerate(self.players):
-            print("Player {}: {}/{}".format(i, player.tricks_taken, player.bid))
-
-        print("Team 1 scored {} ".format(self.get_score(self.players[::2])))
-        print("Team 2 scored {} ".format(self.get_score(self.players[1::2])))
-
     def get_total_score(self) -> list[int]:
         round_scores = self.round.get_scores()
         total_scores = round_scores[:]
@@ -78,10 +74,11 @@ class Game(object):
         total_scores[0] += self.initial_scores[0]
         total_scores[1] += self.initial_scores[1]
 
-        for round in self.previous_rounds:
-            round_scores = round.get_scores()
-            total_scores[0] += round_scores[0]
-            total_scores[1] += round_scores[1]
+        for round_ in self.previous_rounds:
+            if round_ != self.round:
+                round_scores = round_.get_scores()
+                total_scores[0] += round_scores[0]
+                total_scores[1] += round_scores[1]
 
         return total_scores
 
@@ -94,7 +91,7 @@ class Game(object):
             self.round.play_card(action)
 
         if self.round.is_over():
-            self.previous_rounds.append(round)
+            self.previous_rounds.append(self.round)
 
         # TODO: consider what to return (state too??)
 
@@ -140,7 +137,3 @@ class Game(object):
         return len(self.previous_rounds) > self.max_rounds or \
             max(self.round.get_scores()) > self.winning_score
 
-
-
-game = Game()
-game.play_game()
