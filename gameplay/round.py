@@ -56,7 +56,6 @@ class Round(object):
 
             # reset position and leading suit
             self.current_player_id = winning_trick.player.position
-            print(self.current_player_id)
             self.leading_suit = None
         else:
             self.current_player_id = (self.current_player_id + 1) % 4

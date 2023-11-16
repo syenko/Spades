@@ -26,7 +26,6 @@ def processing(filename):
     rounds = []
 
     for i in range(numrounds):
-        print(i)
         tricks = []
         for j in range(13):
             line = lines[4+j+i*17]
@@ -61,6 +60,6 @@ def processing(filename):
         "rounds": rounds
     }
 
-    print(dict)
+    # print(dict)
     return dict
 
