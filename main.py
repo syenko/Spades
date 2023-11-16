@@ -1,18 +1,28 @@
+from data_analysis.utilities import str_to_cards_list, processing
+from gameplay.actions import BidAction, PlayCardAction
+from gameplay.game import Game
 
-# This is a sample Python script.
+data = processing("data_analysis/660481.txt")
+first_round = data['rounds'][0]
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+game = Game(1, 100000000,
+            starting_card_orders=[first_round['cards']],
+            starting_players=[first_round['tricks'][0]['start']])
 
+for player in game.round.players:
+    print(player.hand.cards)
 
-def print_hi(name):
+bids = first_round['bids']
+for bid in bids:
+    game.step(BidAction(bid))
 
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+trick_cards = [x['cards'] for x in first_round['tricks']]
 
+for trick in trick_cards:
+    for card in trick:
+        print("Player {} plays card {}".format(game.round.current_player_id, card))
+        game.step(PlayCardAction(card))
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+print(game.get_total_score())
+print(game.round.tricks_won)
+print(game.round.bids)
