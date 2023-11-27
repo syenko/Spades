@@ -8,7 +8,7 @@ import logging
 num_files_tested = 0
 num_files_correct = 0
 
-def test_file(filename: str):
+def test_file(filename: str) -> bool:
     global num_files_tested
     global num_files_correct
     logging.info("********* Testing file {} *********".format(filename))
@@ -20,7 +20,7 @@ def test_file(filename: str):
     # wrong mode or variation
     if data['mode'] != 0 or data['variation'] != 0:
         logging.info("Wrong mode / variation")
-        return
+        return True
 
     first_round = data['rounds'][0]
 
@@ -53,14 +53,23 @@ def test_file(filename: str):
 
     num_files_tested += 1
     if two_lists_are_equal(game.get_total_score(), first_round['score']):
+    # if two_lists_are_equal(game.round.tricks_won, first_round['trickstaken']):
         num_files_correct += 1
+        return True
+    else:
+        return False
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 onlyfiles = [f for f in listdir("data_analysis/data") if isfile(join("data_analysis/data", f))]
 
-for f in onlyfiles:
-    test_file(f)
+incorrect_files = []
 
-print(num_files_tested)
-print(num_files_correct)
+for f in onlyfiles:
+    if not test_file(f):
+        incorrect_files.append(f)
+
+print("Number of files tested: {}".format(num_files_tested))
+print("Number of files where the identical scores matched the result scores: {}".format(num_files_correct))
+
+print(incorrect_files)
