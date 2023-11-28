@@ -5,6 +5,9 @@ from os import listdir
 from os.path import isfile, join
 import logging
 
+# SETUP
+TEST_FILES = ['660671.txt', '660511.txt', '660672.txt', '660607.txt', '660570.txt', '660594.txt', '660596.txt', '660587.txt', '660552.txt', '660481.txt', '660668.txt', '660523.txt', '660731.txt', '660524.txt'] # ["660607.txt"]
+
 num_files_tested = 0
 num_files_correct = 0
 
@@ -59,9 +62,12 @@ def test_file(filename: str) -> bool:
     else:
         return False
 
-logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
-onlyfiles = [f for f in listdir("data_analysis/data") if isfile(join("data_analysis/data", f))]
+if len(TEST_FILES) == 0:
+    onlyfiles = [f for f in listdir("data_analysis/data") if isfile(join("data_analysis/data", f))]
+else:
+    onlyfiles = TEST_FILES
 
 incorrect_files = []
 
