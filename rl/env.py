@@ -63,7 +63,7 @@ class SpadesEnv(gym.Env):
         for move in cur_round.get_trick_moves():
             trick_cards_played_rep[move.card.get_id() + move.player.position * MAX_NUM_CARDS] = 1
 
-        # tricks taken by each player
+        # number of tricks taken by each player
         tricks_taken_rep = np.zeros(4)
         for player in cur_round.players:
             tricks_taken_rep[player.position] = player.tricks_taken
