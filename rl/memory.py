@@ -15,8 +15,10 @@ class Memory:
         self.batch_size = batch_size
         self.memory = []
 
-    def sample(self):
-        sample = random.sample(self.memory, self.batch_size)
+    def sample(self, k=-1):
+        if k == -1:
+            k = self.batch_size
+        sample = random.sample(self.memory, k)
 
         # TODO: return the sample in some usable form (maybe want to split by stuff)
         return sample
@@ -26,3 +28,6 @@ class Memory:
             self.memory.pop(0)
 
         self.memory.append((state, action, reward, prev_state))
+
+    def size(self):
+        return len(self.memory)
