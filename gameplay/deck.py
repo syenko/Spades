@@ -1,7 +1,7 @@
 from gameplay.card import Card
 import random
 
-from gameplay.constants import Suit
+from gameplay.constants import Suit, NUM_ROUNDS
 
 
 class Deck(object):
@@ -9,7 +9,7 @@ class Deck(object):
         self.cards: list[Card] = []
 
         for suit in Suit:
-            for j in range(2, 15):
+            for j in range(2, NUM_ROUNDS + 2):
                 self.cards.append(Card(suit, j))
 
     def shuffle(self):
