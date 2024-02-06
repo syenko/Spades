@@ -103,21 +103,23 @@ def bid_partial(hand):
                     bid += 1
                 elif value >= 7:
                     bid += 0.5
+    if floor(bid) == 0:
+        return 1
     return floor(bid)
 
-deck = Deck()
-deck.shuffle()
-
-hand = []
-
-for x in deck.cards:
-    if x.number <= 7:
-        hand.append(x)
-    if len(hand) == 6:
-        break
-
-## hand = deck.cards[0:13]
-print(hand)
-print(bid_partial(hand))
+# deck = Deck()
+# deck.shuffle()
+#
+# hand = []
+#
+# for x in deck.cards:
+#     if x.number <= 7:
+#         hand.append(x)
+#     if len(hand) == 6:
+#         break
+#
+# hand = deck.cards[0:13]
+# print(hand)
+# print(bid_partial(hand))
 
 
