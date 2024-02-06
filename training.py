@@ -1,13 +1,26 @@
+from rl.env import SpadesEnv
+from rl.estimator import Estimator
 from rl.memory import Memory
-from rl.memory import Transition
 
-UPDATE_FREQ: int = 5 # update every x rounds (need to test what works best)
-T_UPDATE_FREQ: int = UPDATE_FREQ * 10 # update target network every x rounds
+UPDATE_FREQ: int = 5  # update every x rounds (need to test what works best)
+T_UPDATE_FREQ: int = UPDATE_FREQ * 10  # update target network every x rounds
 NUM_ROUNDS: int = 10000
-MIN_EXP: int = 1000 # min number of observations in memory to start training
+MIN_EXP: int = 1000  # min number of observations in memory to start training
 BATCH_SIZE = 10
+HIDDEN_LAYERS = [128, 128, 128]
 
+env = SpadesEnv()
 mem = Memory(memory_size=10000, batch_size=BATCH_SIZE)
+qnet = Estimator(
+    state_shape_size=env.get_state_shape_size(),
+    num_actions=env.get_num_actions(),
+    hidden_layers=HIDDEN_LAYERS
+)
+target = Estimator(
+    state_shape_size=env.get_state_shape_size(),
+    num_actions=env.get_num_actions(),
+    hidden_layers=HIDDEN_LAYERS
+)
 
 def play_phase():
     """
@@ -31,34 +44,13 @@ def play_phase():
     return
 
 def learn_phase():
-    loss_val = 0
-
-    sample = mem.sample()
-
-    obs: Transition
-    for obs in sample:
-        # TODO: implement psuedocode
-        # get list of q_vals from network at current time
-        # get specific q_val for the action
-
-        # if done
-            # reward = given reward
-        # else
-            # get list of q_vals from TARGET network at time + 1
-            # get best action based on those values
-            # determine next q_value (max of action values returned from TARGET network)
-
-            # reward = reward + scalar * next q-value (future rewards play a little role)
-
-        # add reward to get target_value
-        pass
-    # compute total loss (returned Q-value for the action compared to calculated Q value)
-
-    # calculate average loss
-    mean_loss_val = loss_val / BATCH_SIZE
-
-    # TODO: update model with loss (use optimizer -> backwards propagation)
-
+    states, actions, rewards, next_states, dones = mem.sample()
+    loss = qnet.update(
+        states,
+        actions,
+        target.tar_get_rewards(next_states, rewards, dones)
+    )
+    print(f"Loss is: {loss}")
 
 for episode in range(10000):
     # collect data
@@ -71,7 +63,4 @@ for episode in range(10000):
 
         # update target network
         if episode % T_UPDATE_FREQ == 0:
-            # TODO: update target network (copy weights)
-            pass
-
-    pass
+            target.copy_weights(qnet)

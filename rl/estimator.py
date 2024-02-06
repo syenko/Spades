@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from typing import Self
 
 
 class Estimator:
@@ -8,8 +9,8 @@ class Estimator:
             state_shape_size: int,
             num_actions: int,
             hidden_layers: [int],
-            learning_rate: int,
-            discount_factor: float
+            learning_rate: float = 0.00005,
+            discount_factor: float = 0.99
     ):
         self.qnet = EstimatorNetwork(state_shape_size, num_actions, hidden_layers)
 
@@ -84,6 +85,13 @@ class Estimator:
         # returns loss as a float
         return batch_loss.item()
 
+    def copy_weights(self, model: Self):
+        """
+        Copies weights from model_to_copy to self.qnet
+        :param model: model that should be copied
+        :return: nothing
+        """
+        self.qnet.copy_weights(model.qnet)
 
 class EstimatorNetwork(nn.Module):
     """
@@ -123,3 +131,11 @@ class EstimatorNetwork(nn.Module):
         :return: output of the model
         """
         return self.model(x)
+
+    def copy_weights(self, model_to_copy: Self):
+        """
+        Copies weights from model_to_copy to self.qnet
+        :param model_to_copy: model that should be copied
+        :return: void
+        """
+        self.model.load_state_dict(model_to_copy.state_dict())

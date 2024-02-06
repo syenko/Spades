@@ -110,6 +110,9 @@ class SpadesEnv(gym.Env):
         # TODO: implement
         return size
 
+    def get_num_actions(self):
+        return Action.get_num_actions()
+
     def get_reward(self) -> int:
         # TODO: Implement
         return 0
