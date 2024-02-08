@@ -59,6 +59,7 @@ class Playing(object):
         if possibilities[0].number == self.boss[suit][-1]:
             return possibilities[0]
         return possibilities[-1]
+
     def play_third(self, cards_played):
         suit = cards_played[0].card.suit
         winning_player, winning_card = gameutilities.winning_trick(cards_played)
