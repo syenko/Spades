@@ -2,29 +2,63 @@ import gymnasium as gym
 import numpy as np
 
 from gameplay.actions import Action
+from gameplay.bidding import bid_action_partial
 from gameplay.constants import Phase, MAX_NUM_CARDS
 from gameplay.game import Game
+from gameplay.playing import Playing
+from gameplay.reward import reward_function
 
 
 class SpadesEnv(gym.Env):
 
-    def __init__(self, max_rounds=10, winning_score=500):
+    def __init__(self, max_rounds: int = 10, winning_score: int = 500, agent_id: int = 0):
         self.game = Game(max_rounds, winning_score)
-        pass
+        self.agent_id = agent_id
+
+        self.bots: [Playing] = []
 
     # returns (observation, reward, terminated, truncated, info: list of legalactions)
     def step(self, action: int) -> tuple[list[int], int, bool, bool, list[int]]:
-        self.game.step(Action.get_action_from_id(action))
+        cur_id = self.game.step(Action.get_action_from_id(action))
 
+        # finish the trick
+        for i in range(4-self.game.round.get_num_cards_played_in_trick()):
+            cur_id = self.game.step(self.bots[cur_id].play())
+
+        # calculate reward
+        reward = self.get_reward()
+
+        # update bots
+        for bot in self.bots:
+            if bot:
+                bot.update()
+
+        # play through next trick until we reach the agent's turn again
+        while cur_id != self.agent_id:
+            cur_id = self.game.step(self.bots[cur_id].play())
+
+        # get state, observation, legal_actions, etc
         state = self.extract_state()
         observation: list[int] = state['obs']
         legal_actions: list[int] = state['legal_actions']
 
-        return observation, 0, self.game.is_over(), False, legal_actions
+        return observation, reward, self.game.is_over(), False, legal_actions
 
     # returns (observation, info: list of legal actions)
     def reset(self, seed=None, options=None) -> tuple[list[int], list[int]]:
         self.game.reset()
+
+        # reset bots
+        self.bots = []
+        for i, player in enumerate(self.game.players):
+            if i == self.agent_id:
+                self.bots.append(None)
+            else:
+                self.bots.append(Playing(self.game, player))
+
+        # initial bids
+        for i, player in enumerate(self.game.players):
+            self.game.step(bid_action_partial(player.hand))
 
         state = self.extract_state()
         observation: list[int] = state['obs']
@@ -50,7 +84,7 @@ class SpadesEnv(gym.Env):
 
         # which cards are in my hand
         cards_in_hand_rep = np.zeros(MAX_NUM_CARDS)
-        for card in cur_player.hand.cards:
+        for card in cur_player.hand.hand:
             cards_in_hand_rep[card.get_id()] = 1
 
         # which cards have been played and by whom
@@ -114,5 +148,4 @@ class SpadesEnv(gym.Env):
         return Action.get_num_actions()
 
     def get_reward(self) -> int:
-        # TODO: Implement
-        return 0
+        return reward_function(self.game, self.agent_id)

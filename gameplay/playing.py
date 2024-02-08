@@ -1,4 +1,6 @@
 from gameplay import gameutilities
+from gameplay.actions import PlayCardAction
+from gameplay.card import Card
 from gameplay.constants import Suit
 
 
@@ -19,20 +21,20 @@ class Playing(object):
         self.boss = {Suit.SPADES: [2, 3, 4, 5, 6, 7], Suit.HEARTS: [2, 3, 4, 5, 6, 7],
                      Suit.CLUBS: [2, 3, 4, 5, 6, 7], Suit.DIAMONDS: [2, 3, 4, 5, 6, 7]}
 
-    def play(self):
+    def play(self) -> PlayCardAction:
         cards_played = self.game.round.get_trick_moves()
 
         length = len(cards_played) % 4  # to get position
         if length == 0:
-            return self.play_first()
+            return PlayCardAction(self.play_first())
         elif length == 1:
-            return self.play_second(cards_played)
+            return PlayCardAction(self.play_second(cards_played))
         elif length == 2:
-            return self.play_third(cards_played)
+            return PlayCardAction(self.play_third(cards_played))
         else:
-            return self.play_fourth(cards_played)
+            return PlayCardAction(self.play_fourth(cards_played))
 
-    def spades_winning(self, winner, possibilities, suit):
+    def spades_winning(self, winner, possibilities, suit) -> Card:
         if len(possibilities) == 0:  # I'm void
             if len(self.hand.cards[Suit.SPADES]) == 0:
                 return self.hand.cards[self.worst_suit()][-1]
@@ -42,14 +44,15 @@ class Playing(object):
                         return self.hand.cards[Suit.SPADES][x-1]
             return self.hand.cards[self.worst_suit()][-1]  # plays worst card
         return possibilities[-1]
-    def play_first(self):
+
+    def play_first(self) -> Card:
         suit = self.worst_suit()  # determine what suit to play
         possibilities = self.hand.cards[suit]  # get possible cards
         if possibilities[0].number == self.boss[suit][-1]:
             return possibilities[0]
         return possibilities[-1]
 
-    def play_second(self, cards_played):
+    def play_second(self, cards_played) -> Card:
         suit = cards_played[0].card.suit
         possibilities = self.hand.cards[suit]  # get possible cards
         if len(possibilities) == 0:  # you're void
@@ -60,7 +63,7 @@ class Playing(object):
             return possibilities[0]
         return possibilities[-1]
 
-    def play_third(self, cards_played):
+    def play_third(self, cards_played) -> Card:
         suit = cards_played[0].card.suit
         winning_player, winning_card = gameutilities.winning_trick(cards_played)
         possibilities = self.hand.cards[suit]  # get possible cards
@@ -79,7 +82,7 @@ class Playing(object):
                 return self.hand.cards[self.worst_suit()][-1]  # plays worst card
             return possibilities[-1]
 
-        else: # partner not winning
+        else:  # partner not winning
             if winning_card.suit == Suit.SPADES:
                 return self.spades_winning(winning_card, possibilities, suit)
             if len(possibilities) == 0:  # i'm void
@@ -90,7 +93,7 @@ class Playing(object):
                 return possibilities[0]  # play it
             return possibilities[-1]  # play worst card
 
-    def play_fourth(self, cards_played):
+    def play_fourth(self, cards_played) -> Card:
         suit = cards_played[0].card.suit
         winning_player, winning_card = gameutilities.winning_trick(cards_played)
         possibilities = self.hand.cards[suit]  # get possible cards
@@ -128,7 +131,7 @@ class Playing(object):
             else:
                 self.boss[Suit.HEARTS].remove(move.card.number)
 
-    def worst_suit(self):  # returns weakest suit in 0, 1, 2, 3
+    def worst_suit(self) -> Suit:  # returns weakest suit in 0, 1, 2, 3
         hearts = self.hand.cards[Suit.HEARTS]
         clubs = self.hand.cards[Suit.CLUBS]
         diamonds = self.hand.cards[Suit.DIAMONDS]

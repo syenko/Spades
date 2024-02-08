@@ -2,7 +2,7 @@ from gameplay import bidding
 from gameplay.actions import PlayCardAction, BidAction
 from gameplay.game import Game
 from gameplay.playing import Playing
-from gameplay.reward import reward
+from gameplay.reward import reward_function
 
 game = Game(6, 500)
 
@@ -36,7 +36,7 @@ for i in range(6):
     else:
         oddtotal += 1
 
-    totalreward += reward(game, modelindex)
+    totalreward += reward_function(game, modelindex)
     print("REWARD: " + str(totalreward))
 
     print("TOTAL SCORES: EVEN " + str(eventotal) + ", ODD " + str(oddtotal))

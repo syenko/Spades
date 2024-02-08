@@ -76,12 +76,17 @@ class Round(object):
 
     def get_trick_moves(self) -> list[PlayCardMove]:
         if self.num_cards_played > 0:
+            num_trick_moves = self.get_num_cards_played_in_trick()
+            return self.card_move_log[-num_trick_moves:]
+        return []
+
+    def get_num_cards_played_in_trick(self) -> int:
+        if self.num_cards_played > 0:
             num_trick_moves = self.num_cards_played % 4
             if num_trick_moves == 0:
                 num_trick_moves = 4
-
-            return self.card_move_log[-num_trick_moves:]
-        return []
+            return num_trick_moves
+        return 0
 
     def get_current_player(self) -> Player:
         return self.players[self.current_player_id]
