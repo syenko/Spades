@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 from typing import Self
@@ -18,16 +19,19 @@ class Estimator:
         self.loss = torch.nn.MSELoss(reduction='sum')
         self.discount_factor = discount_factor
 
-    def predict_nograd(self, states):
+    def predict_nograd(self, states, legal_actions):
         """
         Used to generate target values and for prediction
         Calculates q-values WITHOUT training
 
+        :param legal_actions: Batch (or one array) of legal actions
         :param states: Batch of states
         :return: q-value for specific state or STATES
         """
         with torch.no_grad():
-            return self.qnet(states)
+            q_vals = self.qnet(states)
+            # TODO: see if this works for multiple states
+            q_vals[np.logical_not(legal_actions)] = 0  # mask legal actions
 
     def tar_get_rewards(self, next_states, rewards: [int], done: [bool]):
         """
@@ -108,11 +112,13 @@ class EstimatorNetwork(nn.Module):
         :param num_actions: number of actions
         :param hidden_layers: size of each of the hidden layers
         """
+        super(EstimatorNetwork, self).__init__()
+
         self.state_shape_size = state_shape_size
         self.num_actions = num_actions
         self.hidden_layers = hidden_layers
 
-        nodes_per_layer = [self.state_shape] + hidden_layers
+        nodes_per_layer = [self.state_shape_size] + hidden_layers
 
         network = []
         for i in range(len(nodes_per_layer) - 1):
