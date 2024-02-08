@@ -7,10 +7,9 @@ class Suit(Enum):
     HEARTS = 1
     SPADES = 0
 
-
 class Phase(Enum):
     BIDDING = 0
     PLAYING = 1
 
-
-MAX_NUM_CARDS = 52
+NUM_ROUNDS = 6
+MAX_NUM_CARDS = 4 * NUM_ROUNDS

@@ -1,7 +1,7 @@
 from gameplay.actions import Action, PlayCardAction, BidAction
 from gameplay.card import Card
 from gameplay.deck import Deck
-from gameplay.constants import Suit, Phase
+from gameplay.constants import Suit, Phase, NUM_ROUNDS
 from gameplay.moves import Move, PlayCardMove
 from gameplay.player import Player
 from gameplay.round import Round
@@ -47,7 +47,7 @@ class Game(object):
         self.players.clear()
 
         for i in range(1, 5):
-            hand = self.deck.cards[(i - 1) * 13: i * 13]
+            hand = self.deck.cards[(i - 1) * NUM_ROUNDS: i * NUM_ROUNDS]
             self.players.append(Player(hand, i - 1))
 
         starting_player = 0
@@ -105,11 +105,11 @@ class Game(object):
             if self.round.phase == Phase.BIDDING:
                 # bidding first
                 if len(self.round.bid_move_log) < len(self.round.players) // 2:
-                    legal_actions = [BidAction(bid) for bid in range(0, 13)]
+                    legal_actions = [BidAction(bid) for bid in range(0, NUM_ROUNDS)]
                 # partner bid first
                 else:
                     partner_bid = self.round.bids[current_player.position % 2]
-                    max_bid = 13 - partner_bid
+                    max_bid = NUM_ROUNDS - partner_bid
                     min_bid = 4 - partner_bid
                     legal_actions = [BidAction(bid) for bid in range(min_bid, max_bid)]
                     legal_actions.append(BidAction(0)) # always allow going nil

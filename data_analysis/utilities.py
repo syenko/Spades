@@ -1,7 +1,7 @@
 from typing import Any
 
 from gameplay.card import Card
-from gameplay.constants import Suit
+from gameplay.constants import Suit, NUM_ROUNDS
 
 
 def str_value_to_num_value(value: str) -> int:
@@ -37,7 +37,7 @@ def processing(filename):
 
     for i in range(numrounds):
         tricks = []
-        for j in range(13):
+        for j in range(NUM_ROUNDS):
             line = lines[4 + j + i * 17]
             start = int(line[0])
             cardsplayed = str_to_cards_list(line[2:])
@@ -72,6 +72,8 @@ def processing(filename):
 
     # print(dict)
     return dict
+
+
 
 
 def two_lists_are_equal(l1: list[Any], l2: list[Any]) -> bool:

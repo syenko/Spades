@@ -81,6 +81,7 @@ class Round(object):
                 num_trick_moves = 4
 
             return self.card_move_log[-num_trick_moves:]
+        return []
 
     def get_current_player(self) -> Player:
         return self.players[self.current_player_id]
