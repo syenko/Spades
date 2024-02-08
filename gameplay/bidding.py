@@ -97,8 +97,8 @@ def bid_partial(hand):
                 elif num_suits == 1 or num_suits == 3:
                     bid += 0.25
         else: #Trump
-            if 6 <= card_number <= 7: #only count J, Q, K, or A
-                value = card_number + num_suits #seeing how protected trump is
+            if 6 <= card_number <= 7: #only count 6, 7
+                value = card_number + num_suits # how protected Trump is
                 if value >= 8:
                     bid += 1
                 elif value >= 7:
