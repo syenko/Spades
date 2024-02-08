@@ -1,13 +1,13 @@
 import gymnasium as gym
 import numpy as np
 
-from gameplay.actions import Action
+from gameplay.actions import Action, PlayCardAction
 from gameplay.bidding import bid_action_partial
 from gameplay.constants import Phase, MAX_NUM_CARDS
 from gameplay.game import Game
 from gameplay.playing import Playing
 from gameplay.reward import reward_function
-
+import logging
 
 class SpadesEnv(gym.Env):
 
@@ -18,12 +18,16 @@ class SpadesEnv(gym.Env):
         self.bots: [Playing] = []
 
     # returns (observation, reward, terminated, truncated, info: list of legalactions)
-    def step(self, action: int) -> tuple[list[int], int, bool, bool, list[int]]:
-        cur_id = self.game.step(Action.get_action_from_id(action))
+    def step(self, action_id: int) -> tuple[list[int], int, bool, bool, list[int]]:
+        action = Action.get_action_from_id(action_id)
+        logging.info(f"Agent ({self.agent_id}) plays {action.card}")
+        cur_id = self.game.step(action)
 
         # finish the trick
         for i in range(4-self.game.round.get_num_cards_played_in_trick()):
-            cur_id = self.game.step(self.bots[cur_id].play())
+            bot_action: PlayCardAction = self.bots[cur_id].play()
+            logging.info(f"Player {cur_id} plays {bot_action.card}")
+            cur_id = self.game.step(bot_action)
 
         # calculate reward
         reward = self.get_reward()
@@ -58,7 +62,10 @@ class SpadesEnv(gym.Env):
 
         # initial bids
         for i, player in enumerate(self.game.players):
-            self.game.step(bid_action_partial(player.hand))
+            logging.debug(f"Player {i} has hand: {player.hand}")
+            bid_action = bid_action_partial(player.hand)
+            self.game.step(bid_action)
+            logging.info(f"Player {i} bid {bid_action.bid}")
 
         state = self.extract_state()
         observation: list[int] = state['obs']

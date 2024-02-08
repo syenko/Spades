@@ -2,6 +2,9 @@ from rl.env import SpadesEnv
 from rl.estimator import Estimator
 from rl.memory import Memory
 import numpy as np
+import logging
+
+logging.basicConfig(format='(%(levelname)s) %(message)s', level=logging.DEBUG)
 
 UPDATE_FREQ: int = 5  # update every x rounds (need to test what works best)
 T_UPDATE_FREQ: int = UPDATE_FREQ * 10  # update target network every x rounds
@@ -59,6 +62,8 @@ def play_phase():
     else:
         q_vals = qnet.predict_nograd(states=state)
         best_action: int = np.argmax(q_vals)[0]
+
+    logging.info(f"Agent played {action}")
 
     next_state, reward, terminated, truncated, legal_actions = env.step(best_action)
 

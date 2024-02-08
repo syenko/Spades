@@ -50,3 +50,10 @@ class Hand(object):
 
         self.cards[card.suit].remove(card)
         self.played_cards[card.suit].append(card)
+
+    def __str__(self):
+        str = ""
+        for suit, cards in self.cards.items():
+            str += f"{suit.name}: {cards}\n"
+
+        return str
