@@ -49,6 +49,7 @@ class Hand(object):
         assert(card in self.cards[card.suit])
 
         self.cards[card.suit].remove(card)
+        self.hand.remove(card)
         self.played_cards[card.suit].append(card)
 
     def __str__(self):

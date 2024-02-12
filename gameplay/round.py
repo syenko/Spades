@@ -123,5 +123,11 @@ class Round(object):
 
         return scores
 
+    def get_turn_num(self) -> int:
+        """
+        :return: Number of turns played
+        """
+        return self.num_cards_played // 4
+
     def is_over(self) -> bool:
         return self.num_cards_played >= MAX_NUM_CARDS

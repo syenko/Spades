@@ -4,7 +4,7 @@ from rl.memory import Memory
 import numpy as np
 import logging
 
-logging.basicConfig(format='(%(levelname)s) %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='(%(levelname)s) %(message)s', level=logging.INFO)
 
 UPDATE_FREQ: int = 5  # update every x rounds (need to test what works best)
 T_UPDATE_FREQ: int = UPDATE_FREQ * 10  # update target network every x rounds
@@ -45,30 +45,34 @@ def play_phase():
     Likely use e-greedy method
     :return:
     """
-    global epsilon, state, action, legal_actions
+    global epsilon, state, action, legal_actions, next_state, reward, done
 
     # Update epsilon
     epsilon = EPS_END + (EPS_START - EPS_END) * np.exp(epsilon_decay_step * -EPS_DECAY)
 
-    # TODO: implement psuedocode
     best_action: int
     # explore
     if np.random.rand() < epsilon:
+        logging.debug(f"Agent explores")
         # choose random value
         probabilities = np.full(len(legal_actions), 1 / np.sum(legal_actions))
+        # logging.debug(f"probabilities: {probabilities}")
+        # logging.debug(f"legal actions: {legal_actions}")
         probabilities[np.logical_not(legal_actions)] = 0  # mask illegal actions (0 probability)
+        # logging.debug(f"masked probabilities: {probabilities}")
         best_action = np.random.choice([x for x in range(0, len(legal_actions))], p=probabilities)
     # exploit
     else:
+        logging.debug(f"Agent exploits")
         q_vals = qnet.predict_nograd(states=state)
         best_action: int = np.argmax(q_vals)[0]
-
-    logging.info(f"Agent played {action}")
 
     next_state, reward, terminated, truncated, legal_actions = env.step(best_action)
 
     # store transition (cur state, action, reward, next state)
     mem.save(state, action, reward, next_state, terminated)
+
+    done = terminated
 
     return
 
@@ -81,7 +85,8 @@ def learn_phase():
     )
     print(f"Loss is: {loss}")
 
-for episode in range(10000):
+for episode in range(3):
+    logging.info(f"Episode #{episode} =================")
 
     state, legal_actions = env.reset()
 
@@ -97,3 +102,6 @@ for episode in range(10000):
             # update target network
             if episode % T_UPDATE_FREQ == 0:
                 target.copy_weights(qnet)
+
+    done = False
+    env.log_scores()

@@ -37,16 +37,25 @@ class SpadesEnv(gym.Env):
             if bot:
                 bot.update()
 
-        # play through next trick until we reach the agent's turn again
-        while cur_id != self.agent_id:
-            cur_id = self.game.step(self.bots[cur_id].play())
+        # not the last round
+        if not self.game.round.is_over():
+            # round #
+            logging.info(f"Turn #{self.game.round.get_turn_num() + 1} / 6 ************")
+
+            # play through next trick until we reach the agent's turn again
+            while cur_id != self.agent_id:
+                bot_action: PlayCardAction = self.bots[cur_id].play()
+                logging.info(f"Player {cur_id} plays {bot_action.card}")
+                cur_id = self.game.step(bot_action)
 
         # get state, observation, legal_actions, etc
         state = self.extract_state()
         observation: list[int] = state['obs']
         legal_actions: list[int] = state['legal_actions']
 
-        return observation, reward, self.game.is_over(), False, legal_actions
+        # logging.debug(f"Game over? {self.game.round.is_over()}")
+
+        return observation, reward, self.game.round.is_over(), False, legal_actions  # TODO: change done condition to self.game.is_over() for full game
 
     # returns (observation, info: list of legal actions)
     def reset(self, seed=None, options=None) -> tuple[list[int], list[int]]:
@@ -71,7 +80,12 @@ class SpadesEnv(gym.Env):
         observation: list[int] = state['obs']
         legal_actions: list[int] = state['legal_actions']
 
+        logging.info(f"Turn #1 / 6 ************")
+
         return observation, legal_actions
+
+    def log_scores(self):
+        logging.info(f"Scores: {self.game.round.get_scores()}")
 
     def close(self):
         pass
