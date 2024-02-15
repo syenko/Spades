@@ -124,7 +124,7 @@ class SpadesEnv(gym.Env):
             tricks_taken_rep[player.position] = player.tricks_taken
 
         spades_broken_rep = np.array([1] if cur_round.spades_broken else [0])
-        round_number_rep = np.array([self.game.round])
+        round_number_rep = np.array([self.game.round.round_num])
 
         rep = []
         rep.append(is_bidding_rep)

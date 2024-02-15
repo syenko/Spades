@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 from typing import Self
 
+from torch import Tensor
+
 
 class Estimator:
     def __init__(
@@ -10,7 +12,7 @@ class Estimator:
             state_shape_size: int,
             num_actions: int,
             hidden_layers: [int],
-            learning_rate: float = 0.00005,
+            learning_rate: float = 0.01,
             discount_factor: float = 0.99
     ):
         self.qnet = EstimatorNetwork(state_shape_size, num_actions, hidden_layers)
@@ -19,7 +21,7 @@ class Estimator:
         self.loss = torch.nn.MSELoss(reduction='sum')
         self.discount_factor = discount_factor
 
-    def predict_nograd(self, states, legal_actions):
+    def predict_nograd(self, states, legal_actions) -> Tensor:
         """
         Used to generate target values and for prediction
         Calculates q-values WITHOUT training
@@ -28,32 +30,38 @@ class Estimator:
         :param states: Batch of states
         :return: q-value for specific state or STATES
         """
-        with torch.no_grad():
-            q_vals = self.qnet(states)
-            # TODO: see if this works for multiple states
-            q_vals[np.logical_not(legal_actions)] = 0  # mask legal actions
+        states_t = torch.from_numpy(np.asarray(states, dtype="float32"))
+        actions_t = torch.from_numpy(np.array(legal_actions, dtype="float32"))
 
-    def tar_get_rewards(self, next_states, rewards: [int], done: [bool]):
+        with torch.no_grad():
+            q_vals = self.qnet(states_t)
+            q_vals = actions_t * q_vals  # mask legal actions
+
+        return q_vals
+
+    def tar_get_rewards(self, next_states, legal_actions, rewards: [int], done: [bool]):
         """
         Used for target network to calculate rewards for a batch of states
 
         :param next_states: a list of states
+        :param legal_actions: list of legal actions per state
         :param rewards: a list of rewards
         :param done: a boolean list of whether each state finished
         :return: rewards adjusted by network's prediction
         """
 
-        next_q_values = self.predict_nograd(next_states).max()
+        # next best q-vals (rewards for each state)
+        next_q_values, _ = self.predict_nograd(next_states, legal_actions).max(dim=1)
 
         # if there is no next state, set all extra predictions from the model to zero
         # reward is just the final reward (don't predict future rewards, because there ARE no future rewards)
         next_q_values[done] = 0
 
-        final_rewards = rewards + self.discount_factor * next_q_values
+        final_rewards = torch.tensor(rewards) + self.discount_factor * next_q_values
 
         return final_rewards
 
-    def update(self, states, actions, rewards):
+    def update(self, states, actions: [int], rewards: Tensor):
         """
         Updates the q-network (used for normal q-network)
 
@@ -62,22 +70,27 @@ class Estimator:
         :param rewards: (y) a batch rewards calculated from BOTH the given rewards and target network outputs
         :return:
         """
+        states_t = torch.from_numpy(np.asarray(states, dtype="float32"))
+        # unsqueeze(1) converts from list [1, 2, 3] to lists of lists [[1],[2],[3]]
+        actions_t = torch.from_numpy(np.asarray(actions)).unsqueeze(1)
+        rewards_t = rewards.unsqueeze(1)
+
         self.optimizer.zero_grad()  # zeroes the gradient
 
         self.qnet.train()  # sets up network for training (not really necessary but helpful)
 
         # for each state, calculate the q-vals
         # returns an array with dimensions [batch_size][num_actions]
-        q_vals = self.qnet.forward(states)
+        q_vals = self.qnet.forward(states_t)
 
         # convert general q_vals (all q-values for ALL actions) to Q-value for SPECIFIC action
         # good explanation of what torch.gather does:
         #   https://stackoverflow.com/questions/50999977/what-does-the-gather-function-do-in-pytorch-in-layman-terms
         # dimension = -1 means LAST dimension (because 1st dimension would be the batches)
-        Q = torch.gather(q_vals, dim=-1, index=actions)
+        Q = torch.gather(q_vals, dim=-1, index=actions_t)
 
         # calculate loss
-        batch_loss = self.loss(Q, rewards)
+        batch_loss = self.loss(Q, rewards_t)
 
         # update model
         batch_loss.backward()
@@ -95,7 +108,7 @@ class Estimator:
         :param model: model that should be copied
         :return: nothing
         """
-        self.qnet.copy_weights(model.qnet)
+        self.qnet.copy_weights(model.qnet.model)
 
 class EstimatorNetwork(nn.Module):
     """
@@ -129,7 +142,7 @@ class EstimatorNetwork(nn.Module):
 
         self.model = nn.Sequential(*network)
 
-    def forward(self, x):
+    def forward(self, x: Tensor):
         """
         Passes an input tensor through the net
 
