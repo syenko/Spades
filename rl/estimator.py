@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.masked import masked_tensor, MaskedTensor
 from typing import Self
 
 from torch import Tensor
@@ -21,7 +22,7 @@ class Estimator:
         self.loss = torch.nn.MSELoss(reduction='sum')
         self.discount_factor = discount_factor
 
-    def predict_nograd(self, states, legal_actions) -> Tensor:
+    def predict_nograd(self, states, legal_actions) -> MaskedTensor:
         """
         Used to generate target values and for prediction
         Calculates q-values WITHOUT training
@@ -31,13 +32,15 @@ class Estimator:
         :return: q-value for specific state or STATES
         """
         states_t = torch.from_numpy(np.asarray(states, dtype="float32"))
-        actions_t = torch.from_numpy(np.array(legal_actions, dtype="float32"))
+        actions_t = torch.from_numpy(np.array(legal_actions, dtype="bool"))
 
         with torch.no_grad():
             q_vals = self.qnet(states_t)
-            q_vals = actions_t * q_vals  # mask legal actions
 
-        return q_vals
+        masked_q_vals = masked_tensor(q_vals, actions_t)  # mask legal actions
+
+        return masked_q_vals
+
 
     def tar_get_rewards(self, next_states, legal_actions, rewards: [int], done: [bool]):
         """
@@ -51,7 +54,8 @@ class Estimator:
         """
 
         # next best q-vals (rewards for each state)
-        next_q_values, _ = self.predict_nograd(next_states, legal_actions).max(dim=1)
+        vals = self.predict_nograd(next_states, legal_actions)
+        next_q_values = torch.amax(vals, 1).get_data()
 
         # if there is no next state, set all extra predictions from the model to zero
         # reward is just the final reward (don't predict future rewards, because there ARE no future rewards)
@@ -61,7 +65,7 @@ class Estimator:
 
         return final_rewards
 
-    def update(self, states, actions: [int], rewards: Tensor):
+    def update(self, states, actions: [int], rewards: Tensor) -> tuple[float, float]:
         """
         Updates the q-network (used for normal q-network)
 
@@ -99,8 +103,8 @@ class Estimator:
         # sets up network for evaluation (not really necessary but probably safer)
         self.qnet.eval()
 
-        # returns loss as a float
-        return batch_loss.item()
+        # returns loss and reward as a float
+        return batch_loss.item(), torch.mean(rewards_t).item()
 
     def copy_weights(self, model: Self):
         """

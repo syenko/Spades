@@ -1,3 +1,5 @@
+import torch
+
 from rl.env import SpadesEnv
 from rl.estimator import Estimator
 from rl.memory import Memory
@@ -8,18 +10,19 @@ from matplotlib import pyplot as plt
 
 logging.basicConfig(format='(%(levelname)s) %(message)s', level=logging.WARNING)
 
-UPDATE_FREQ: int = 32  # update every x rounds (need to test what works best)
-T_UPDATE_FREQ: int = UPDATE_FREQ * 1000  # update target network every x rounds
-NUM_ROUNDS: int = 500000
-MIN_EXP: int = 1000  # min number of observations in memory to start training
-BATCH_SIZE: int = 128
-HIDDEN_LAYERS: [int] = [32, 32, 32]
+UPDATE_FREQ: int = 6  # update every x rounds (need to test what works best)
+T_UPDATE_FREQ: int = UPDATE_FREQ * 10000  # update target network every x rounds
+NUM_ROUNDS: int = 1000000
+BUFFER_SIZE: int = 10000  # max size of memory buffer
+MIN_EXP: int = BUFFER_SIZE - 1  # min number of observations in memory to start training
+BATCH_SIZE: int = 1000
+HIDDEN_LAYERS: [int] = [128, 128, 128]
 EPS_START: float = 1.0
 EPS_END: float = 0.01
-EPS_DECAY = 0.00005
+EPS_DECAY = (EPS_END/EPS_START)**(1/NUM_ROUNDS)
 
 env = SpadesEnv()
-mem = Memory(memory_size=10000, batch_size=BATCH_SIZE)
+mem = Memory(memory_size=BUFFER_SIZE, batch_size=BATCH_SIZE)
 qnet = Estimator(
     state_shape_size=env.get_state_shape_size(),
     num_actions=env.get_num_actions(),
@@ -32,6 +35,7 @@ target = Estimator(
 )
 
 loss = []
+reward_log = []
 
 epsilon: int = EPS_START
 epsilon_decay_step = 0
@@ -39,8 +43,10 @@ state: [int] = []
 action: int = 0
 reward: int = 0
 next_state: [int] = []
-done: bool = False
+done: bool = True
 legal_actions: [bool] = []
+
+epsilons_log = []
 
 
 def play_phase():
@@ -51,10 +57,12 @@ def play_phase():
     Likely use e-greedy method
     :return:
     """
-    global epsilon, state, action, legal_actions, next_state, reward, done
+    global epsilon, state, action, legal_actions, next_state, reward, done, epsilon_decay_step
 
     # Update epsilon
-    epsilon = EPS_END + (EPS_START - EPS_END) * np.exp(epsilon_decay_step * -EPS_DECAY)
+    epsilon = epsilon * EPS_DECAY
+    epsilon_decay_step += 1
+    epsilons_log.append(epsilon)
 
     best_action: int
     # explore
@@ -70,8 +78,10 @@ def play_phase():
     # exploit
     else:
         logging.debug(f"Agent exploits")
-        q_vals = qnet.predict_nograd(states=state)
-        best_action: int = np.argmax(q_vals)[0]
+        q_vals = qnet.predict_nograd(states=state, legal_actions=legal_actions)
+        best_action: int = int(torch.argmax(q_vals).item())
+        # logging.warning(f"best action: {best_action}, {q_vals}, {legal_actions}")
+        assert (legal_actions[best_action] == 1)
 
     next_state, reward, terminated, truncated, legal_actions = env.step(best_action)
 
@@ -85,37 +95,49 @@ def play_phase():
 
 def learn_phase():
     states, actions, rewards, next_states, dones, legal_actions = mem.sample()
-    loss = qnet.update(
+    loss, batch_reward = qnet.update(
         states,
         actions,
         target.tar_get_rewards(next_states, legal_actions, rewards, dones)
     )
     # print(f"Loss is: {loss}")
-    return loss
+    return loss, batch_reward
 
 
 for episode in tqdm(range(NUM_ROUNDS)):
     logging.info(f"Episode #{episode} =================")
 
-    state, legal_actions = env.reset()
+    if done:
+        state, legal_actions = env.reset()
+        done = False
 
-    while not done:
-        # collect data
-        play_phase()
+    # collect data
+    play_phase()
 
     # learning phase
     if mem.size() > MIN_EXP:
         if episode % UPDATE_FREQ == 0:
-            loss.append([len(loss) * UPDATE_FREQ, learn_phase()])
+            batch_loss, batch_reward = learn_phase()
+            loss.append([episode, batch_loss])
+            reward_log.append([episode, batch_reward])
 
         # update target network
         if episode % T_UPDATE_FREQ == 0:
             target.copy_weights(qnet)
 
-    done = False
     env.log_scores()
 
-np.savetxt("output.csv", np.asarray(loss), delimiter=",")
+np.savetxt("loss_out.csv", np.asarray(loss), delimiter=",")
+np.savetxt("reward_out.csv", np.asarray(reward_log), delimiter=",")
 
-plt.plot(np.asarray(loss))
+figure, axis = plt.subplots(3, 1, figsize=(5, 15))
+
+axis[0].plot([x for x, y in loss], [y for x, y in loss])
+axis[0].set_title("Loss")
+
+axis[1].plot([x for x, y in reward_log], [y for x, y in reward_log])
+axis[1].set_title("Reward")
+
+axis[2].plot(epsilons_log)
+axis[2].set_title("Epsilon")
 plt.show()
