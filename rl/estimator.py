@@ -13,7 +13,7 @@ class Estimator:
             state_shape_size: int,
             num_actions: int,
             hidden_layers: [int],
-            learning_rate: float = 0.01,
+            learning_rate: float = 0.001,
             discount_factor: float = 0.99
     ):
         self.qnet = EstimatorNetwork(state_shape_size, num_actions, hidden_layers)

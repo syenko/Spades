@@ -12,7 +12,7 @@ def reward_function(game, modelindex):
 
     if game.round.is_over():  # if game is over
         if trickstaken < bid:  # if you got set
-            rewardtotal -= 500
+            rewardtotal -= 50
         elif trickstaken == bid:  # if you made perfect
             rewardtotal += 10
 

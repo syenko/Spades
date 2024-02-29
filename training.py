@@ -7,31 +7,40 @@ import numpy as np
 import logging
 from tqdm import tqdm
 from matplotlib import pyplot as plt
+from pathlib import Path
+from datetime import datetime
 
 logging.basicConfig(format='(%(levelname)s) %(message)s', level=logging.WARNING)
+
+curtime = datetime.now()
+
+PATH = f"data_analysis/training_data/{curtime.month}_{curtime.day}__{curtime.hour}_{curtime.minute}_{curtime.second}"
 
 UPDATE_FREQ: int = 6  # update every x rounds (need to test what works best)
 T_UPDATE_FREQ: int = UPDATE_FREQ * 10000  # update target network every x rounds
 NUM_ROUNDS: int = 1000000
-BUFFER_SIZE: int = 10000  # max size of memory buffer
+BUFFER_SIZE: int = 50000  # max size of memory buffer
 MIN_EXP: int = BUFFER_SIZE - 1  # min number of observations in memory to start training
 BATCH_SIZE: int = 1000
-HIDDEN_LAYERS: [int] = [128, 128, 128]
+HIDDEN_LAYERS: [int] = [256, 256, 256]
 EPS_START: float = 1.0
 EPS_END: float = 0.01
 EPS_DECAY = (EPS_END/EPS_START)**(1/NUM_ROUNDS)
+LEARNING_RATE = 0.001
 
 env = SpadesEnv()
 mem = Memory(memory_size=BUFFER_SIZE, batch_size=BATCH_SIZE)
 qnet = Estimator(
     state_shape_size=env.get_state_shape_size(),
     num_actions=env.get_num_actions(),
-    hidden_layers=HIDDEN_LAYERS
+    hidden_layers=HIDDEN_LAYERS,
+    learning_rate=LEARNING_RATE
 )
 target = Estimator(
     state_shape_size=env.get_state_shape_size(),
     num_actions=env.get_num_actions(),
-    hidden_layers=HIDDEN_LAYERS
+    hidden_layers=HIDDEN_LAYERS,
+    learning_rate=LEARNING_RATE
 )
 
 loss = []
@@ -123,13 +132,35 @@ for episode in tqdm(range(NUM_ROUNDS)):
 
         # update target network
         if episode % T_UPDATE_FREQ == 0:
+            logging.warning(f"Updated Target Net")
             target.copy_weights(qnet)
+
+        if episode % 1000 == 0 and len(loss) > 1000:
+            logging.warning(f"Average Loss: {sum(loss[-1000])/1000}")
+            logging.warning(f"Average Reward: {sum(reward_log[-1000])/1000}")
 
     env.log_scores()
 
-np.savetxt("loss_out.csv", np.asarray(loss), delimiter=",")
-np.savetxt("reward_out.csv", np.asarray(reward_log), delimiter=",")
+# save data
+out = Path(f"{PATH}/info.txt")
+out.parent.mkdir(exist_ok=True, parents=True)
+out.write_text(f"""
+UPDATE_FREQ: int = {UPDATE_FREQ}  # update every x rounds (need to test what works best)
+T_UPDATE_FREQ: int = {T_UPDATE_FREQ} # update target network every x rounds
+NUM_ROUNDS: int = {NUM_ROUNDS} 
+BUFFER_SIZE: int = {BUFFER_SIZE}  # max size of memory buffer
+MIN_EXP: int = {MIN_EXP}  # min number of observations in memory to start training
+BATCH_SIZE: int = {BATCH_SIZE}
+HIDDEN_LAYERS: [int] = {HIDDEN_LAYERS}
+EPS_START: float = {EPS_START} 
+EPS_END: float = {EPS_END} 
+EPS_DECAY = {EPS_DECAY}
+LEARNING_RATE = {LEARNING_RATE}
+""")
+np.savetxt(f"{PATH}/loss_out.csv", np.asarray(loss), delimiter=",")
+np.savetxt(f"{PATH}/reward_out.csv", np.asarray(reward_log), delimiter=",")
 
+# plots
 figure, axis = plt.subplots(3, 1, figsize=(5, 15))
 
 axis[0].plot([x for x, y in loss], [y for x, y in loss])
