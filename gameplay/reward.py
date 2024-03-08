@@ -21,5 +21,10 @@ def reward_function(game, modelindex):
             rewardtotal -= 5
         else:
             rewardtotal += 5
+    else: # if you didn't win
+        if trickstaken < bid:  # need more tricks
+            rewardtotal -= 5
+        else: # don't need more tricks
+            rewardtotal += 5
 
     return rewardtotal

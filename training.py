@@ -14,17 +14,17 @@ logging.basicConfig(format='(%(levelname)s) %(message)s', level=logging.WARNING)
 
 curtime = datetime.now()
 
-PATH = f"data_analysis/training_data/{curtime.month}_{curtime.day}__{curtime.hour}_{curtime.minute}_{curtime.second}"
+PATH = f"data_analysis/training_data/NO_TARGET_2_CARDS_{curtime.month}_{curtime.day}__{curtime.hour}_{curtime.minute}_{curtime.second}"
 
-UPDATE_FREQ: int = 6  # update every x rounds (need to test what works best)
-T_UPDATE_FREQ: int = UPDATE_FREQ * 10000  # update target network every x rounds
-NUM_ROUNDS: int = 1000000
+UPDATE_FREQ: int = 1  # update every x rounds (need to test what works best)
+T_UPDATE_FREQ: int = UPDATE_FREQ * 50000  # update target network every x rounds
+NUM_ROUNDS: int = 100000
 BUFFER_SIZE: int = 50000  # max size of memory buffer
 MIN_EXP: int = BUFFER_SIZE - 1  # min number of observations in memory to start training
-BATCH_SIZE: int = 1000
+BATCH_SIZE: int = 256
 HIDDEN_LAYERS: [int] = [256, 256, 256]
 EPS_START: float = 1.0
-EPS_END: float = 0.01
+EPS_END: float = 0.001
 EPS_DECAY = (EPS_END/EPS_START)**(1/NUM_ROUNDS)
 LEARNING_RATE = 0.001
 
@@ -131,13 +131,13 @@ for episode in tqdm(range(NUM_ROUNDS)):
             reward_log.append([episode, batch_reward])
 
         # update target network
-        if episode % T_UPDATE_FREQ == 0:
-            logging.warning(f"Updated Target Net")
-            target.copy_weights(qnet)
+        if (episode - MIN_EXP - 1) % T_UPDATE_FREQ == 0:
+            logging.warning(f"(Didn't) Updated Target Net")
+            # target.copy_weights(qnet)
 
         if episode % 1000 == 0 and len(loss) > 1000:
-            logging.warning(f"Average Loss: {sum(loss[-1000])/1000}")
-            logging.warning(f"Average Reward: {sum(reward_log[-1000])/1000}")
+            logging.warning(f"Average Loss: {sum(x[1] for x in loss[-1000:])/1000}")
+            logging.warning(f"Average Reward: {sum(x[1] for x in reward_log[-1000:])/1000}")
 
     env.log_scores()
 
@@ -159,6 +159,12 @@ LEARNING_RATE = {LEARNING_RATE}
 """)
 np.savetxt(f"{PATH}/loss_out.csv", np.asarray(loss), delimiter=",")
 np.savetxt(f"{PATH}/reward_out.csv", np.asarray(reward_log), delimiter=",")
+torch.save({
+    'qnet_state_dict': qnet.qnet.state_dict(),
+    'target_state_dict': target.qnet.state_dict(),
+    'qnet_optimizer_state_dict': qnet.optimizer.state_dict(),
+    'target_optimizer_state_dict': target.optimizer.state_dict(),
+}, f"{PATH}/checkpoint.pt")
 
 # plots
 figure, axis = plt.subplots(3, 1, figsize=(5, 15))

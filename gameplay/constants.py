@@ -11,5 +11,5 @@ class Phase(Enum):
     BIDDING = 0
     PLAYING = 1
 
-NUM_ROUNDS = 6
+NUM_ROUNDS = 2
 MAX_NUM_CARDS = 4 * NUM_ROUNDS

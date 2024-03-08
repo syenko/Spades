@@ -1,8 +1,7 @@
 from gameplay import gameutilities
 from gameplay.actions import PlayCardAction
 from gameplay.card import Card
-from gameplay.constants import Suit
-
+from gameplay.constants import Suit, NUM_ROUNDS
 
 class Playing(object):
 
@@ -18,8 +17,8 @@ class Playing(object):
         self.hand = player.hand
         self.position = player.position
         self.partner = (self.position + 2) % 4
-        self.boss = {Suit.SPADES: [2, 3, 4, 5, 6, 7], Suit.HEARTS: [2, 3, 4, 5, 6, 7],
-                     Suit.CLUBS: [2, 3, 4, 5, 6, 7], Suit.DIAMONDS: [2, 3, 4, 5, 6, 7]}
+        self.boss = {Suit.SPADES: [i for i in range(2, NUM_ROUNDS + 2)], Suit.HEARTS: [i for i in range(2, NUM_ROUNDS + 2)],
+                     Suit.CLUBS: [i for i in range(2, NUM_ROUNDS + 2)], Suit.DIAMONDS: [i for i in range(2, NUM_ROUNDS + 2)]}
 
     def play(self) -> PlayCardAction:
         cards_played = self.game.round.get_trick_moves()
@@ -142,12 +141,12 @@ class Playing(object):
         diamondrank = -len(diamonds)
 
         if heartrank != 0:
-            if hearts[-1].number == 6:
+            if hearts[-1].number == NUM_ROUNDS:
                 if len(hearts) == 1:
                     heartrank -= 10
                 else:
                     heartrank -= 5
-            elif hearts[-1].number == 7:
+            elif hearts[-1].number == NUM_ROUNDS + 1:
                 if len(hearts) == 1:
                     heartrank -= 5
                 else:
@@ -156,12 +155,12 @@ class Playing(object):
             heartrank = -20
 
         if clubrank != 0:
-            if clubs[-1].number == 6:
+            if clubs[-1].number == NUM_ROUNDS:
                 if len(clubs) == 1:
                     clubrank -= 10
                 else:
                     clubrank -= 5
-            elif clubs[-1].number == 7:
+            elif clubs[-1].number == NUM_ROUNDS + 1:
                 if len(clubs) == 1:
                     clubrank -= 5
                 else:
@@ -170,12 +169,12 @@ class Playing(object):
             clubrank = -20
 
         if diamondrank != 0:
-            if diamonds[-1].number == 6:
+            if diamonds[-1].number == NUM_ROUNDS:
                 if len(clubs) == 1:
                     clubrank -= 10
                 else:
                     clubrank -= 5
-            elif diamonds[-1].number == 7:
+            elif diamonds[-1].number == NUM_ROUNDS + 1:
                 if len(diamonds) == 1:
                     diamondrank -= 5
                 else:
