@@ -87,6 +87,9 @@ class SpadesEnv(gym.Env):
     def log_scores(self):
         logging.info(f"Scores: {self.game.round.get_scores()}")
 
+    def get_scores(self):
+        return self.game.round.get_scores()
+
     def close(self):
         pass
 

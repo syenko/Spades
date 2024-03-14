@@ -14,12 +14,12 @@ logging.basicConfig(format='(%(levelname)s) %(message)s', level=logging.WARNING)
 
 curtime = datetime.now()
 
-PATH = f"data_analysis/training_data/NO_TARGET_2_CARDS_{curtime.month}_{curtime.day}__{curtime.hour}_{curtime.minute}_{curtime.second}"
+PATH = f"data_analysis/training_data/{curtime.month}_{curtime.day}__{curtime.hour}_{curtime.minute}_{curtime.second}"
 
 UPDATE_FREQ: int = 1  # update every x rounds (need to test what works best)
-T_UPDATE_FREQ: int = UPDATE_FREQ * 50000  # update target network every x rounds
-NUM_ROUNDS: int = 100000
-BUFFER_SIZE: int = 50000  # max size of memory buffer
+T_UPDATE_FREQ: int = UPDATE_FREQ * 100000  # update target network every x rounds
+NUM_ROUNDS: int = 1000000
+BUFFER_SIZE: int = 25000  # max size of memory buffer
 MIN_EXP: int = BUFFER_SIZE - 1  # min number of observations in memory to start training
 BATCH_SIZE: int = 256
 HIDDEN_LAYERS: [int] = [256, 256, 256]
@@ -51,6 +51,7 @@ epsilon_decay_step = 0
 state: [int] = []
 action: int = 0
 reward: int = 0
+ep_reward: int = 0
 next_state: [int] = []
 done: bool = True
 legal_actions: [bool] = []
@@ -66,7 +67,7 @@ def play_phase():
     Likely use e-greedy method
     :return:
     """
-    global epsilon, state, action, legal_actions, next_state, reward, done, epsilon_decay_step
+    global epsilon, state, action, legal_actions, next_state, reward, ep_reward, done, epsilon_decay_step
 
     # Update epsilon
     epsilon = epsilon * EPS_DECAY
@@ -98,6 +99,7 @@ def play_phase():
     mem.save(state, action, reward, next_state, terminated, legal_actions)
 
     done = terminated
+    ep_reward += reward
 
     return
 
@@ -117,6 +119,8 @@ for episode in tqdm(range(NUM_ROUNDS)):
     logging.info(f"Episode #{episode} =================")
 
     if done:
+        reward_log.append([episode, ep_reward])
+        ep_reward = 0
         state, legal_actions = env.reset()
         done = False
 
@@ -128,12 +132,12 @@ for episode in tqdm(range(NUM_ROUNDS)):
         if episode % UPDATE_FREQ == 0:
             batch_loss, batch_reward = learn_phase()
             loss.append([episode, batch_loss])
-            reward_log.append([episode, batch_reward])
+            # reward_log.append([episode, batch_reward])
 
         # update target network
         if (episode - MIN_EXP - 1) % T_UPDATE_FREQ == 0:
-            logging.warning(f"(Didn't) Updated Target Net")
-            # target.copy_weights(qnet)
+            logging.warning(f"Updated Target Net")
+            target.copy_weights(qnet)
 
         if episode % 1000 == 0 and len(loss) > 1000:
             logging.warning(f"Average Loss: {sum(x[1] for x in loss[-1000:])/1000}")

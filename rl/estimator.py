@@ -6,7 +6,6 @@ from typing import Self
 
 from torch import Tensor
 
-
 class Estimator:
     def __init__(
             self,
@@ -62,7 +61,6 @@ class Estimator:
         next_q_values[done] = 0
 
         final_rewards = torch.tensor(rewards) + self.discount_factor * next_q_values
-
         return final_rewards
 
     def update(self, states, actions: [int], rewards: Tensor) -> tuple[float, float]:
@@ -85,7 +83,7 @@ class Estimator:
 
         # for each state, calculate the q-vals
         # returns an array with dimensions [batch_size][num_actions]
-        q_vals = self.qnet.forward(states_t)
+        q_vals = self.qnet(states_t)
 
         # convert general q_vals (all q-values for ALL actions) to Q-value for SPECIFIC action
         # good explanation of what torch.gather does:
@@ -104,7 +102,7 @@ class Estimator:
         self.qnet.eval()
 
         # returns loss and reward as a float
-        return batch_loss.item(), torch.mean(rewards_t).item()
+        return batch_loss.item(), torch.mean(Q).item()
 
     def copy_weights(self, model: Self):
         """
@@ -112,7 +110,12 @@ class Estimator:
         :param model: model that should be copied
         :return: nothing
         """
-        self.qnet.copy_weights(model.qnet.model)
+        self.qnet.copy_weights(model.qnet)
+
+    def load_weights(self, PATH):
+        checkpoint = torch.load(PATH)
+        self.qnet.load_state_dict(checkpoint['qnet_state_dict'])
+
 
 class EstimatorNetwork(nn.Module):
     """
@@ -161,4 +164,8 @@ class EstimatorNetwork(nn.Module):
         :param model_to_copy: model that should be copied
         :return: void
         """
-        self.model.load_state_dict(model_to_copy.state_dict())
+        target_net_state_dict = self.model.state_dict()
+        qnet_state_dict = model_to_copy.model.state_dict()
+        for key in qnet_state_dict:
+            target_net_state_dict[key] = qnet_state_dict[key]
+        self.model.load_state_dict(target_net_state_dict)

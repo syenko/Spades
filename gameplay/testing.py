@@ -3,6 +3,7 @@ from gameplay.actions import PlayCardAction, BidAction
 from gameplay.game import Game
 from gameplay.playing import Playing
 from gameplay.reward import reward_function
+from gameplay.constants import NUM_ROUNDS
 
 game = Game(6, 500)
 
@@ -20,14 +21,14 @@ totalreward = 0
 player = 0
 eventotal = 0
 oddtotal = 0
-for i in range(6):
+for i in range(NUM_ROUNDS):
     print("ROUND NUMBER: " + str(i))
     print("STARTING PLAYER: " + str(player))
     for j in range(4):
         move = playing[player].play()
-        print(move)
+        print(move.card)
         # print(players[player].hand.cards)
-        player = game.step(PlayCardAction(move))
+        player = game.step(move)
     for j in range(4):
         playing[j].update()
 
