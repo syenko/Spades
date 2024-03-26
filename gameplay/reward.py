@@ -1,5 +1,6 @@
 from gameplay import gameutilities
 
+MAX_REWARD = 50
 
 def reward_function(game, modelindex):
     cards_played = game.round.get_trick_moves()
@@ -16,6 +17,14 @@ def reward_function(game, modelindex):
         elif trickstaken == bid:  # if you made perfect
             rewardtotal += 10
 
+        total_score = game.get_total_score()
+        # won
+        if total_score[modelindex % 2] > total_score[(modelindex + 1) % 2]:
+            rewardtotal += 50
+        # loss
+        if total_score[modelindex % 2] < total_score[(modelindex + 1) % 2]:
+            rewardtotal -= 50
+
     if winning_player == modelindex or winning_player == partnerindex:  # if winner is you or partner
         if trickstaken > bid:  # if overtrick
             rewardtotal -= 5
@@ -27,4 +36,4 @@ def reward_function(game, modelindex):
         else: # don't need more tricks
             rewardtotal += 5
 
-    return rewardtotal
+    return rewardtotal / MAX_REWARD
