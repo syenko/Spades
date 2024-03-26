@@ -1,0 +1,10 @@
+UPDATE_FREQ: int = 6  # update every x rounds (need to test what works best)
+T_UPDATE_FREQ: int = UPDATE_FREQ * 10000  # update target network every x rounds
+NUM_ROUNDS: int = 1000000
+BUFFER_SIZE: int = 10000  # max size of memory buffer
+MIN_EXP: int = BUFFER_SIZE - 1  # min number of observations in memory to start training
+BATCH_SIZE: int = 128
+HIDDEN_LAYERS: [int] = [32, 32, 32]
+EPS_START: float = 1.0
+EPS_END: float = 0.01
+EPS_DECAY = (EPS_END/EPS_START)**(1/NUM_ROUNDS)
